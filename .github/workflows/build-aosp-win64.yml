@@ -14,6 +14,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+
       - name: Install dependencies
         run: |
           sudo apt update
@@ -25,10 +31,23 @@ jobs:
             libusb-1.0-0 libusb-1.0-0-dev \
             mingw-w64 mingw-w64-tools libz-mingw-w64-dev
 
-      - name: Build Windows x64
+      - name: Build scrcpy server
+        env:
+          GRADLE: gradle
+          VERSION: aosp-su
+        run: release/build_server.sh
+
+      - name: Build Windows x64 client
         env:
           VERSION: aosp-su
         run: release/build_windows.sh 64
+
+      - name: Assemble portable package
+        run: |
+          cp release/work/build-server/server/scrcpy-server \
+             release/work/build-win64/dist/scrcpy-server
+          test -f release/work/build-win64/dist/scrcpy.exe
+          test -f release/work/build-win64/dist/scrcpy-server
 
       - name: Upload Windows x64 artifact
         uses: actions/upload-artifact@v4
